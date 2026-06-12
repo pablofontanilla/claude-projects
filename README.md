@@ -2,7 +2,7 @@
 
 A multi-repo workspace manager for AI-assisted development. Declare the repositories you need in a YAML manifest (`dev-env.yaml`), and this tool clones and organizes them, layers per-repo Claude context on top, and provides structured project workspaces for long-running tasks.
 
-Ships with a **preset system** for common development scenarios — start with a bundled preset (the included ones target OpenShift components) or build your own custom environment for any domain.
+Ships with a **preset system** for common development scenarios — start with a bundled preset or build your own custom environment for any domain.
 
 ## Quick Start
 
@@ -41,7 +41,7 @@ The `/dev-env-setup` skill walks you through everything: preset selection, repo 
 | `tnf` | Two Nodes with Fencing — OpenShift HA with Pacemaker/Corosync |
 | `lvm-operator` | LVM Operator (LVMS) — Local storage using LVM/TopoLVM for OpenShift |
 
-Create your own preset by adding a directory under `presets/` with a `preset.yaml`, `dev-env.yaml`, and optional `context/` and `docs/` directories.
+Create your own preset by adding a directory under `presets/` with a `preset.yaml` and `dev-env.yaml`, plus optional `context/`, `supplemental/`, and `docs/` directories. See `presets/example/preset.yaml` for an annotated schema reference covering all optional keys (`context_filename`, `metadata`, `tracker`, `skill_suggestions`, `task_types`).
 
 ## Claude Code Skills
 
