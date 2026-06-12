@@ -170,33 +170,27 @@ clone_repo() {
     if [[ -n "$ACTIVE_PRESET_NAME" && -d "$PRESETS_DIR/$ACTIVE_PRESET_NAME" ]]; then
         local preset_base="$PRESETS_DIR/$ACTIVE_PRESET_NAME"
 
+        # Read context_filename from preset.yaml; default to CONTEXT.md
+        local ctx_filename="CONTEXT.md"
+        if [[ -f "$preset_base/preset.yaml" ]]; then
+            local _cf
+            _cf=$(python3 -c "
+import yaml
+with open('$preset_base/preset.yaml') as f:
+    d = yaml.safe_load(f)
+print(d.get('context_filename', 'CONTEXT.md'))
+" 2>/dev/null)
+            [[ -n "$_cf" ]] && ctx_filename="$_cf"
+        fi
+
         if [[ -f "$preset_base/context/$dir.md" ]]; then
-            cp "$preset_base/context/$dir.md" "$target/TNF-CONTEXT.md"
-            log_info "  Added TNF-CONTEXT.md"
+            cp "$preset_base/context/$dir.md" "$target/$ctx_filename"
+            log_info "  Added $ctx_filename"
         fi
 
         if [[ ! -f "$target/CLAUDE.md" && -f "$preset_base/supplemental/$dir.md" ]]; then
             cp "$preset_base/supplemental/$dir.md" "$target/CLAUDE.md"
             log_info "  Added supplemental CLAUDE.md"
-        fi
-    else
-        # Fallback for dev-env.yaml files that predate source tracking
-        for ctx in "$PRESETS_DIR"/*/context/"$dir".md; do
-            if [[ -f "$ctx" ]]; then
-                cp "$ctx" "$target/TNF-CONTEXT.md"
-                log_info "  Added TNF-CONTEXT.md"
-                break
-            fi
-        done
-
-        if [[ ! -f "$target/CLAUDE.md" ]]; then
-            for sup in "$PRESETS_DIR"/*/supplemental/"$dir".md; do
-                if [[ -f "$sup" ]]; then
-                    cp "$sup" "$target/CLAUDE.md"
-                    log_info "  Added supplemental CLAUDE.md"
-                    break
-                fi
-            done
         fi
     fi
 }

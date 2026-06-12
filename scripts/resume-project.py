@@ -6,7 +6,6 @@ Output: JSON to stdout (see resolve_project for schema).
 """
 
 import datetime
-import glob
 import json
 import os
 import re
@@ -17,33 +16,21 @@ from typing import Any
 
 import yaml
 
-SKILL_SUGGESTIONS: dict[str, list[str]] = {
-    "bug": [
-        "/prow-job:analyze-test-failure",
-        "/prow-job:analyze-install-failure",
-        "/prow-job:extract-must-gather",
-        "/feature-dev:feature-dev",
-    ],
-    "feature": [
-        "/feature-dev:feature-dev",
-        "/pr-review-toolkit:review-pr",
-    ],
-    "ci-testing": [
-        "/prow-job:analyze-test-failure",
-        "/prow-job:analyze-install-failure",
-        "/prow-job:analyze-resource",
-        "/prow-job:extract-must-gather",
-    ],
-    "docs": [
-        "/feature-dev:feature-dev",
-    ],
-    "analysis": [
-        "/pr-review-toolkit:review-pr",
-        "/prow-job:analyze-test-failure",
-        "/feature-dev:feature-dev",
-    ],
-}
-DEFAULT_SKILLS = ["/feature-dev:feature-dev"]
+def load_preset_skill_suggestions(preset_name: str, root: Path) -> dict[str, list[str]]:
+    """Read skill_suggestions from presets/<name>/preset.yaml; return empty dict if absent."""
+    if not preset_name:
+        return {}
+    preset_yaml = root / "presets" / preset_name / "preset.yaml"
+    if not preset_yaml.is_file():
+        return {}
+    try:
+        data = yaml.safe_load(preset_yaml.read_text()) or {}
+    except yaml.YAMLError:
+        return {}
+    raw = data.get("skill_suggestions", {})
+    if not isinstance(raw, dict):
+        return {}
+    return {k: list(v) for k, v in raw.items() if isinstance(v, list)}
 
 ALWAYS_PRESENT = {"CLAUDE.md", "README.md", ".gitignore"}
 
@@ -211,8 +198,8 @@ def resolve_preset_context(preset: str, root: Path) -> dict:
     return {"context_file": context_file, "docs": docs}
 
 
-def resolve_repo_context(repos: list[str], root: Path) -> list[dict[str, str]]:
-    """For each repo, find context files (repo CLAUDE.md and/or preset context)."""
+def resolve_repo_context(repos: list[str], root: Path, preset_name: str = "") -> list[dict[str, str]]:
+    """For each repo, find context files (repo CLAUDE.md and/or active preset context)."""
     results = []
     for repo in repos:
         repo_claude = root / "repos" / repo / "CLAUDE.md"
@@ -223,13 +210,14 @@ def resolve_repo_context(repos: list[str], root: Path) -> list[dict[str, str]]:
                 "source": "repo",
             })
 
-        matches = glob.glob(str(root / "presets" / "*" / "context" / f"{repo}.md"))
-        if matches:
-            results.append({
-                "repo": repo,
-                "path": str(Path(matches[0]).relative_to(root)),
-                "source": "preset",
-            })
+        if preset_name:
+            ctx = root / "presets" / preset_name / "context" / f"{repo}.md"
+            if ctx.is_file():
+                results.append({
+                    "repo": repo,
+                    "path": str(ctx.relative_to(root)),
+                    "source": "preset",
+                })
 
     return results
 
@@ -399,17 +387,17 @@ def resolve_project(arg: str | None, root: Path) -> dict:
         "checked": 0, "unchecked": 0, "total": 0,
         "unchecked_items": [], "checked_items": [],
     }
-    repo_context = resolve_repo_context(repos_list, root)
-
     preset = fm.get("preset", "")
     if isinstance(preset, list):
         preset = preset[0] if preset else ""
+    repo_context = resolve_repo_context(repos_list, root, preset_name=preset)
     preset_ctx = resolve_preset_context(preset, root)
 
     project_type = fm.get("type", "")
     if isinstance(project_type, list):
         project_type = project_type[0] if project_type else ""
-    suggestions = SKILL_SUGGESTIONS.get(project_type, DEFAULT_SKILLS)
+    preset_skills = load_preset_skill_suggestions(preset, root)
+    suggestions = preset_skills.get(project_type, [])
 
     frontmatter = dict(fm)
     frontmatter["repos"] = repos_list

@@ -43,7 +43,7 @@ Display a structured summary:
 | **Type** | <P.frontmatter.type or "Unknown"> |
 | **Created** | <P.frontmatter.created or "Unknown"> |
 | **Status** | <P.frontmatter.status or "Unknown"> |
-| **JIRA** | <P.frontmatter.jira or "None"> |
+| **Ticket** | <P.frontmatter.ticket or P.frontmatter.jira or "None"> |
 | **Repos** | <comma-separated P.frontmatter.repos, or "None specified"> |
 ```
 

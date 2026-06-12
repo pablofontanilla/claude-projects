@@ -1,3 +1,32 @@
 name: tnf
-description: "Two Nodes with Fencing - OpenShift HA with Pacemaker/Corosync"
-min_ocp_version: "4.20"
+description: "Two Nodes with Fencing — OpenShift HA with Pacemaker/Corosync"
+context_filename: CONTEXT.md
+
+metadata:
+  min_ocp_version: "4.20"
+
+tracker:
+  type: jira
+  base_url: https://issues.redhat.com/browse
+  ticket_regex: '[A-Z]+-\d+'
+
+skill_suggestions:
+  bug:
+    - /prow-job:analyze-test-failure
+    - /prow-job:analyze-install-failure
+    - /prow-job:extract-must-gather
+    - /feature-dev:feature-dev
+  feature:
+    - /feature-dev:feature-dev
+    - /pr-review-toolkit:review-pr
+  ci-testing:
+    - /prow-job:analyze-test-failure
+    - /prow-job:analyze-install-failure
+    - /prow-job:analyze-resource
+    - /prow-job:extract-must-gather
+  docs:
+    - /feature-dev:feature-dev
+  analysis:
+    - /pr-review-toolkit:review-pr
+    - /prow-job:analyze-test-failure
+    - /feature-dev:feature-dev

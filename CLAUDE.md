@@ -18,7 +18,7 @@ All source repositories are cloned into the `repos/` folder. Use `/dev-env-setup
 1. **Always look at repos in this workspace FIRST** before using internal knowledge or web searches
 2. If a component has a repo here, that repo is the **authoritative source of truth**
 3. Code in `repos/` reflects the latest development state, which may differ from public documentation
-4. Repos may contain a **`TNF-CONTEXT.md`** alongside their `CLAUDE.md` — this file describes the repo's role in the TNF ecosystem, key paths for TNF work, and cross-repo relationships. **Always read both files** when working in a repo
+4. Repos may contain a **`CONTEXT.md`** (or the filename declared in the active preset's `context_filename`) alongside their `CLAUDE.md` — this file describes the repo's role in the workspace domain and its cross-repo relationships. **Always read both files** when working in a repo
 
 ## Fork Model
 
@@ -35,10 +35,12 @@ Projects that modify source repos use git worktrees for branch isolation, allowi
 **Branch naming:**
 | Type | Pattern | Example |
 |------|---------|---------|
-| feature | `<jira-slug>` | `ocpedge-2608-multi-hypervisor` |
-| bug | `fix/<jira-slug>` | `fix/ocpbugs-84336-port-race` |
-| docs | `<jira-slug>` | `ocpedge-2690-lifecycle-docs` |
+| feature | `<ticket-slug>` | `my-feature-2608` |
+| bug | `fix/<ticket-slug>` | `fix/my-project-84336` |
+| docs | `<ticket-slug>` | `my-docs-2690` |
 | PR review | `pr/<number>` | `pr/1620` |
+
+When a tracker ticket is available, `/project:new` derives the slug from the ticket ID using the active preset's `tracker.ticket_regex`. Without a tracker, a description-based kebab-case slug is used.
 
 **Lifecycle:** Created by `/project:new` → status shown by `/project:resume` → cleaned up by `/project:close`
 
@@ -68,5 +70,5 @@ Projects that modify source repos use git worktrees for branch isolation, allowi
 
 For architecture details, debugging commands, and domain concepts, see the active preset's docs under `presets/<name>/`:
 - `presets/<name>/docs/` — Architecture diagrams, debugging guides, domain concepts
-- `presets/<name>/context/<repo>.md` — TNF context files (always distributed as `TNF-CONTEXT.md`)
+- `presets/<name>/context/<repo>.md` — Per-repo context files (distributed to `repos/<repo>/CONTEXT.md` on clone, or whatever `context_filename` declares in `preset.yaml`)
 - `presets/<name>/supplemental/<repo>.md` — Supplemental `CLAUDE.md` for repos that don't have their own

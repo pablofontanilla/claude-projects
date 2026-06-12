@@ -1,2 +1,29 @@
+# preset.yaml — schema reference
+# ================================
+# Every field except `name` and `description` is optional.
+# Copy this into your own preset directory and remove the fields you don't need.
+
 name: example
 description: "Minimal example preset — demonstrates the expected layout for preset packs"
+
+# context_filename: CONTEXT.md   # filename used when distributing context/<repo>.md
+#                                 # to cloned repos.  Default: CONTEXT.md
+
+# metadata:                       # free-form key/value map — domain-specific info
+#   min_version: "1.0"            # e.g. minimum platform version, region, etc.
+
+# tracker:                        # issue-tracker integration for /project:new
+#   type: jira                    # jira | github | gitlab | none  (default: none)
+#   base_url: https://issues.example.com/browse
+#   ticket_regex: '[A-Z]+-\d+'   # regex to extract a ticket ID from a URL or string
+
+# skill_suggestions:              # skills surfaced by /project:new and /project:resume
+#   bug: []                       # list of /skill:name strings per task type
+#   feature: []                   # types: bug | feature | ci-testing | docs | analysis
+#   ci-testing: []
+#   docs: []
+#   analysis: []
+
+# task_types:                     # extend or override the built-in task taxonomy
+#   my-type:
+#     description: "Custom task type for this preset"
