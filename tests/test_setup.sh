@@ -146,11 +146,16 @@ assert_contains  "preset block: name"                       "$ws/dev-env.yaml" "
 assert_contains  "preset block: source bundled"             "$ws/dev-env.yaml" "source: bundled"
 assert_not_contains "no stray scalar preset: line"          "$ws/dev-env.yaml" "^preset: example"
 
-# Re-init with tnf to verify scalar 'preset: tnf' is replaced by the mapping
-run_setup_yn "$ws" "y" init tnf >/dev/null 2>&1
-assert_contains  "tnf scalar replaced: name"   "$ws/dev-env.yaml" "name: tnf"
-assert_contains  "tnf scalar replaced: source" "$ws/dev-env.yaml" "source: bundled"
-assert_not_contains "scalar form gone"         "$ws/dev-env.yaml" "^preset: tnf"
+# Verify scalar 'preset: name' (old format) is replaced by the mapping block.
+# Create a fixture preset whose dev-env.yaml carries the legacy scalar form.
+scalar_preset="$ws/presets/scalar-test"
+mkdir -p "$scalar_preset"
+printf 'name: scalar-test\ndescription: "Scalar test fixture"\n' > "$scalar_preset/preset.yaml"
+printf 'preset: scalar-test\nrepos: []\n' > "$scalar_preset/dev-env.yaml"
+run_setup_yn "$ws" "y" init scalar-test >/dev/null 2>&1
+assert_contains  "scalar replaced: name"   "$ws/dev-env.yaml" "name: scalar-test"
+assert_contains  "scalar replaced: source" "$ws/dev-env.yaml" "source: bundled"
+assert_not_contains "scalar form gone"     "$ws/dev-env.yaml" "^preset: scalar-test"
 
 cleanup "$ws"
 
@@ -289,7 +294,7 @@ group "parse_yaml_preset backward compat"
 
 ws=$(new_workspace)
 
-# Write a dev-env.yaml with the old scalar form (as the tnf preset still ships)
+# Write a dev-env.yaml with the old scalar form (as some preset packs may still ship)
 cat > "$ws/dev-env.yaml" << 'EOF'
 preset: example
 

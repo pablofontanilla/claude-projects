@@ -1,3 +1,0 @@
-name: tnf
-description: "Two Nodes with Fencing - OpenShift HA with Pacemaker/Corosync"
-min_ocp_version: "4.20"
