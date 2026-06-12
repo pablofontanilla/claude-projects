@@ -32,17 +32,21 @@ Use AskUserQuestion with these options:
 
 | Type | When to suggest |
 |------|-----------------|
-| Bug investigation | Description mentions a bug, issue, OCPBUGS, regression, failure, broken behavior |
+| Bug investigation | Description mentions a bug, issue, ticket, regression, failure, broken behavior |
 | Feature development | Description mentions adding, implementing, creating new functionality |
-| CI/testing | Description mentions CI, Prow, test failures, promotion, job configuration |
+| CI/testing | Description mentions CI, test failures, pipeline configuration |
 | Documentation | Description mentions docs, writing, documenting, guide |
 | Analysis/review | Description mentions reviewing, analyzing, investigating (without a specific bug), understanding |
 
-**1c. JIRA Ticket (optional)**
+**1c. Tracker Ticket (optional)**
 
-Ask: "Do you have a JIRA ticket for this task? If so, paste the URL
-(e.g., https://issues.redhat.com/browse/OCPBUGS-12345). Otherwise, just
-say 'no'."
+Check the active preset's `tracker:` block in `presets/<active-preset>/preset.yaml`
+(read `preset.name` from `dev-env.yaml`). If no preset or `type: none`,
+skip this question entirely and proceed to 1d.
+
+If `type: jira | github | gitlab`, ask:
+> "Do you have a ticket for this task? If so, paste the URL
+> (e.g., `<tracker.base_url>/PROJECT-123`). Otherwise, say 'no'."
 
 **1d. Related Repositories**
 
@@ -74,13 +78,13 @@ selected in Step 1d:
    it will be modified.
 
 2. Derive the branch name:
-   - If JIRA was provided, extract the ticket ID (e.g., `OCPEDGE-2608`)
-     and ask the user for a short slug to append:
-     > "Branch name will start with `<jira-id>`. Add a short slug?
+   - If a ticket URL was provided, extract the ticket ID using the
+     active preset's `tracker.ticket_regex` (e.g., `OCPEDGE-2608`
+     from `https://issues.redhat.com/browse/OCPEDGE-2608`), then ask:
+     > "Branch name will start with `<ticket-id-lowercase>`. Add a short slug?
      > (e.g., `multi-hypervisor` → `ocpedge-2608-multi-hypervisor`)"
-   - If no JIRA, use the project folder name as the branch name
+   - If no ticket, use the project folder name as the branch name
    - For `bug` type, prefix with `fix/`
-     (e.g., `fix/ocpbugs-84336-port-race`)
    - Confirm the final branch name with the user
 
 3. For each repo the user plans to modify, create a worktree:
@@ -115,7 +119,7 @@ created manually later if needed.
 
 **1f. Additional Context (optional)**
 
-Ask: "Any additional context? (PR URLs, Prow job URLs, related projects,
+Ask: "Any additional context? (PR URLs, CI job URLs, related projects,
 etc.) Say 'no' to skip."
 
 **If the project type is `analysis` and the user provided a PR URL:**
@@ -140,8 +144,8 @@ Extract the repo and PR number, then create a worktree:
 
 Based on the gathered information:
 
-1. If a JIRA ticket was provided, extract the ticket ID (e.g.,
-   `OCPBUGS-74679`) and use it as the suggested folder name.
+1. If a tracker ticket was provided, extract the ticket ID using the
+   preset's `tracker.ticket_regex` and use it as the suggested folder name.
 2. Otherwise, generate a kebab-case slug from the task description
    (e.g., "Fix kubelet start timeout after fencing" becomes
    `fix-kubelet-start-timeout`). Keep it under 40 characters.
@@ -225,13 +229,10 @@ After creating the project, provide a summary:
    > instead of the main checkout (`repos/<repo>/`).
 3. Suggest relevant skills based on the task type:
 
-| Type | Skills to suggest |
-|------|-------------------|
-| bug | `/prow-job:analyze-test-failure`, `/prow-job:analyze-install-failure`, `/prow-job:extract-must-gather`, `/feature-dev:feature-dev` |
-| feature | `/feature-dev:feature-dev`, `/pr-review-toolkit:review-pr` |
-| ci-testing | `/prow-job:analyze-test-failure`, `/prow-job:analyze-install-failure`, `/prow-job:analyze-resource`, `/prow-job:extract-must-gather` |
-| docs | `/feature-dev:feature-dev` |
-| analysis | `/pr-review-toolkit:review-pr`, `/prow-job:analyze-test-failure`, `/feature-dev:feature-dev` |
+   Read the active preset's `skill_suggestions` from
+   `presets/<active-preset>/preset.yaml`. Look up the list for the
+   project's task type. If the preset has no `skill_suggestions` or no
+   entry for this type, skip this step — do not invent skill names.
 
 4. Suggest concrete next steps for starting the work
 5. Remind the user they can resume this project later with
@@ -254,7 +255,7 @@ project: <folder-name>
 type: <bug|feature|ci-testing|docs|analysis>
 created: <YYYY-MM-DD>
 status: active
-jira: <URL or "none">
+ticket: <URL or "none">
 preset: <preset name from dev-env.yaml, or omit if none>
 repos:
   - <repo1>
@@ -311,7 +312,7 @@ For each type below, the specification defines:
 
 **Bug Investigation** (`type: bug`)
 - Summary heading: `## Bug Summary`
-- Metadata: Jira, Assignee (TBD)
+- Metadata: Ticket, Assignee (TBD)
 - Detail files: `investigation.md`, `ci-runs.md`, `source-code-map.md`
 - Plan heading: `## Fix Plan`
 - Plan items: Identify root cause, Determine fix approach, Implement
@@ -321,7 +322,7 @@ For each type below, the specification defines:
 
 **Feature Development** (`type: feature`)
 - Summary heading: `## Feature Summary`
-- Metadata: Jira, Target Version (TBD)
+- Metadata: Ticket, Target Version (TBD)
 - Detail files: `design.md`, `source-code-map.md`
 - Plan heading: `## Implementation Plan`
 - Plan items: Review enhancement doc, Design approach, Implement
@@ -331,7 +332,7 @@ For each type below, the specification defines:
 
 **CI/Testing** (`type: ci-testing`)
 - Summary heading: `## Test Summary`
-- Metadata: Jira, CI Job(s) (TBD)
+- Metadata: Ticket, CI Job(s) (TBD)
 - Detail files: `ci-runs.md`, `test-failures.md`
 - Plan heading: `## Test Plan`
 - Plan items: Identify failing jobs, Analyze failures, Implement fixes,
@@ -341,7 +342,7 @@ For each type below, the specification defines:
 
 **Documentation** (`type: docs`)
 - Summary heading: `## Doc Summary`
-- Metadata: Jira, Target (which docs are created/updated)
+- Metadata: Ticket, Target (which docs are created/updated)
 - Detail files: `drafts.md`
 - Plan heading: `## Outline`
 - Plan items: Research and outline, Write draft, Technical review,
@@ -351,7 +352,7 @@ For each type below, the specification defines:
 
 **Analysis/Review** (`type: analysis`)
 - Summary heading: `## Analysis Summary`
-- Metadata: Jira, Scope (what is being analyzed/reviewed)
+- Metadata: Ticket, Scope (what is being analyzed/reviewed)
 - Detail files: `findings.md`
 - Plan heading: `## Analysis Plan`
 - Plan items: Define scope, Gather data, Analyze findings,
