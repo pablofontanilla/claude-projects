@@ -339,12 +339,50 @@ EOF
 run_setup "$ws" clone >/dev/null 2>&1
 
 assert_file     "sharedrepo cloned"                       "$ws/repos/sharedrepo/README.md"
-assert_file     "TNF-CONTEXT.md distributed"              "$ws/repos/sharedrepo/TNF-CONTEXT.md"
-assert_contains "context is from ALPHA (active preset)"   "$ws/repos/sharedrepo/TNF-CONTEXT.md" "ALPHA"
-assert_not_contains "context is NOT from BETA"            "$ws/repos/sharedrepo/TNF-CONTEXT.md" "BETA"
+assert_file     "CONTEXT.md distributed"                  "$ws/repos/sharedrepo/CONTEXT.md"
+assert_contains "context is from ALPHA (active preset)"   "$ws/repos/sharedrepo/CONTEXT.md" "ALPHA"
+assert_not_contains "context is NOT from BETA"            "$ws/repos/sharedrepo/CONTEXT.md" "BETA"
 
 cleanup "$ws"
 cleanup "$shared_src"
+
+# ── 8b. context_filename override in preset.yaml ─────────────────────────────
+group "clone_repo: context_filename override"
+
+ws=$(new_workspace)
+
+mkdir -p "$ws/presets/custom/context"
+# preset declares a custom filename
+printf 'name: custom\ndescription: "Custom"\ncontext_filename: MY-CONTEXT.md\n' \
+    > "$ws/presets/custom/preset.yaml"
+printf '# custom context\n' > "$ws/presets/custom/context/testrepo.md"
+printf 'repos:\n  - name: testrepo\n    url: https://example.com/r.git\n    branch: main\n    category: testing\n    summary: "test repo"\n' \
+    > "$ws/presets/custom/dev-env.yaml"
+
+shared_src2=$(mktemp -d)
+make_cloneable_repo "$shared_src2" "testrepo"
+
+cat > "$ws/dev-env.yaml" << EOF
+preset:
+  name: custom
+  source: bundled
+
+repos:
+  - name: testrepo
+    url: file://$shared_src2
+    branch: main
+    category: testing
+    summary: "test repo"
+EOF
+
+run_setup "$ws" clone >/dev/null 2>&1
+
+assert_file         "MY-CONTEXT.md distributed"                  "$ws/repos/testrepo/MY-CONTEXT.md"
+assert_not_contains "default CONTEXT.md not created"             "$ws/repos/testrepo/MY-CONTEXT.md" "CONTEXT.md"
+assert_contains     "context content present"                     "$ws/repos/testrepo/MY-CONTEXT.md" "custom context"
+
+cleanup "$ws"
+cleanup "$shared_src2"
 
 # ─── Summary ─────────────────────────────────────────────────────────────────
 
